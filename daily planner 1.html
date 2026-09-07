@@ -1,0 +1,3493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Daily Planner</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            fontFamily: {
+                display: ["Georgia", "serif"],
+                sans: ["Inter", "Arial", "sans-serif"]
+            },
+            colors: {
+                purple: {
+                    950: "#211746",
+                    900: "#2a1d50",
+                    800: "#372663",
+                    700: "#7139db",
+                    600: "#8641e8"
+                }
+            }
+        }
+    }
+}
+</script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.app-bg {
+    background-color: #f7f5fc;
+    background-image:
+        linear-gradient(rgba(110, 82, 160, .055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(110, 82, 160, .055) 1px, transparent 1px);
+    background-size: 34px 34px;
+}
+
+.sidebar {
+    background: #27194d;
+}
+
+.serif {
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+.small-title {
+    letter-spacing: 2px;
+    font-size: 11px;
+}
+
+.sidebar-link {
+    transition: .2s;
+}
+
+.sidebar-link:hover {
+    background: rgba(255,255,255,.08);
+}
+
+.sidebar-link.active {
+    background: #3b2a68;
+    border-left: 3px solid #ffc43d;
+}
+
+.day-card {
+    transition: .2s;
+}
+
+.day-card:hover {
+    transform: translateY(-2px);
+}
+
+.day-card.active {
+    background: #27194d;
+    color: white;
+    border-bottom: 4px solid #ffc43d;
+}
+
+.hero {
+    background:
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.16), transparent 25%),
+        radial-gradient(circle at 80% 90%, rgba(255,255,255,.12), transparent 22%),
+        linear-gradient(110deg, #823ee6, #b44ee4);
+}
+
+.hero-ring {
+    position: absolute;
+    width: 170px;
+    height: 170px;
+    border: 25px solid rgba(255,255,255,.10);
+    border-radius: 50%;
+}
+
+.task-card {
+    transition: .2s;
+}
+
+.task-card:hover {
+    box-shadow: 0 12px 30px rgba(48, 30, 85, .08);
+    transform: translateY(-1px);
+}
+
+.check {
+    transition: .2s;
+}
+
+.check.done {
+    background: #9b58e9;
+    color: white;
+}
+
+.modal-bg {
+    backdrop-filter: blur(8px);
+}
+
+.nav-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-scroll {
+    scrollbar-width: none;
+}
+
+.progress-bar {
+    transition: width .5s ease;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.mobile-menu {
+    display: none;
+}
+
+@media(max-width: 900px) {
+
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        width: 260px;
+        transition: .3s;
+    }
+
+    .sidebar.open {
+        left: 0;
+    }
+
+    .mobile-menu {
+        display: flex;
+    }
+
+    .content {
+        margin-left: 0 !important;
+    }
+}
+
+</style>
+</head>
+
+<body class="app-bg text-[#292440]">
+
+<!-- =====================================================
+     MOBILE OVERLAY
+===================================================== -->
+
+<div id="mobileOverlay"
+     onclick="closeSidebar()"
+     class="hidden fixed inset-0 bg-black/40 z-50">
+</div>
+
+
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
+
+<aside id="sidebar"
+       class="sidebar fixed left-0 top-0 bottom-0 w-[280px] text-white z-[60] flex flex-col">
+
+    <!-- LOGO -->
+
+    <div class="px-6 pt-7 pb-6">
+
+        <div class="flex items-center gap-3">
+
+            <div class="w-12 h-12 rounded-2xl
+                        bg-[#ffc443]
+                        text-[#29184e]
+                        flex items-center justify-center
+                        text-2xl shadow-lg">
+
+                📅
+
+            </div>
+
+            <div>
+
+                <h1 class="serif text-2xl">
+                    Daily Planner
+                </h1>
+
+                <p class="text-[10px] tracking-[2px]
+                          text-purple-200 mt-1">
+
+                    MAKE ROOM FOR TODAY
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADD BUTTON -->
+
+    <div class="px-4 mb-7">
+
+        <button
+            onclick="openAddModal()"
+            class="w-full py-3.5 rounded-full
+                   bg-[#843ee8]
+                   hover:bg-[#934df0]
+                   shadow-[0_6px_0_#5522a2]
+                   transition font-bold">
+
+            <span class="text-xl mr-2">+</span>
+            Add to day
+
+        </button>
+
+    </div>
+
+
+    <!-- NAVIGATION -->
+
+    <div class="px-4">
+
+        <p class="small-title text-purple-300 px-3 mb-3">
+            WORKSPACE
+        </p>
+
+
+        <button onclick="showPage('overview')"
+                data-page="overview"
+                class="sidebar-link active w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">▦</span>
+
+            <span class="font-semibold">
+                Overview
+            </span>
+
+        </button>
+
+
+        <button onclick="showPage('tasks')"
+                data-page="tasks"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">✓</span>
+
+            <span class="font-semibold flex-1">
+                Tasks & schedule
+            </span>
+
+            <span id="sidebarTaskCount"
+                  class="bg-white/10 px-2 py-1 rounded-full text-xs">
+
+                0
+
+            </span>
+
+        </button>
+
+
+        <button onclick="showPage('goals')"
+                data-page="goals"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">◎</span>
+
+            <span class="font-semibold">
+                Goals
+            </span>
+
+        </button>
+
+
+        <button onclick="showPage('calendar')"
+                data-page="calendar"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">▣</span>
+
+            <span class="font-semibold">
+                Calendar
+            </span>
+
+        </button>
+
+
+        <button onclick="showPage('notes')"
+                data-page="notes"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">▤</span>
+
+            <span class="font-semibold">
+                Notes
+            </span>
+
+        </button>
+
+
+        <button onclick="showPage('habits')"
+                data-page="habits"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">♨</span>
+
+            <span class="font-semibold">
+                Habits
+            </span>
+
+        </button>
+
+
+        <button onclick="showPage('statistics')"
+                data-page="statistics"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left">
+
+            <span class="text-xl">▥</span>
+
+            <span class="font-semibold">
+                Statistics
+            </span>
+
+        </button>
+
+    </div>
+
+
+    <!-- BOTTOM NOTE -->
+
+    <div class="mt-auto p-4">
+
+        <div class="border border-white/10
+                    bg-white/5 rounded-2xl p-4">
+
+            <p class="small-title text-purple-300">
+                A NOTE FOR YOU
+            </p>
+
+            <p class="serif text-xl mt-4 leading-relaxed">
+
+                The next right thing
+                is enough.
+
+            </p>
+
+            <p class="text-xs text-purple-300 mt-4">
+
+                Your plans stay private
+                on this device.
+
+            </p>
+
+        </div>
+
+
+        <div class="border-t border-white/10
+                    mt-5 pt-5
+                    flex items-center gap-3">
+
+            <div class="w-9 h-9 rounded-full
+                        bg-[#ffc443]
+                        text-[#29184e]
+                        flex items-center justify-center
+                        font-bold">
+
+                Y
+
+            </div>
+
+            <div class="flex-1">
+
+                <p class="font-bold text-sm">
+                    Your workspace
+                </p>
+
+                <p class="text-xs text-purple-300">
+                    Personal planning space
+                </p>
+
+            </div>
+
+            <span class="text-purple-300">
+                ↻
+            </span>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
+<div class="content ml-[280px] min-h-screen">
+
+
+    <!-- MOBILE HEADER -->
+
+    <div class="mobile-menu sticky top-0 z-40
+                bg-[#27194d] text-white
+                px-4 py-3
+                items-center justify-between">
+
+        <button onclick="openSidebar()"
+                class="text-2xl">
+
+            ☰
+
+        </button>
+
+        <span class="serif text-xl">
+            Daily Planner
+        </span>
+
+        <button onclick="openAddModal()"
+                class="text-2xl">
+
+            +
+
+        </button>
+
+    </div>
+
+
+
+    <!-- =================================================
+         TOP BAR
+    ================================================= -->
+
+    <header class="px-6 md:px-10 pt-8">
+
+        <div class="flex flex-col
+                    lg:flex-row
+                    lg:items-center
+                    justify-between gap-5">
+
+            <div>
+
+                <p class="small-title text-purple-500">
+                    WORKSPACE / <span id="breadcrumb">OVERVIEW</span>
+                </p>
+
+                <h2 id="pageTitle"
+                    class="serif text-4xl mt-3">
+
+                    Good afternoon<span class="text-purple-600">..</span>
+
+                </h2>
+
+            </div>
+
+
+            <div class="flex items-center gap-3">
+
+                <div class="bg-white border border-purple-100
+                            rounded-full px-4 py-2.5
+                            flex items-center gap-3">
+
+                    <span class="text-slate-400">
+                        ⌕
+                    </span>
+
+                    <input
+                        id="globalSearch"
+                        oninput="searchTasks()"
+                        placeholder="Search"
+                        class="outline-none w-24 sm:w-32
+                               text-sm bg-transparent">
+
+                    <span class="hidden sm:block
+                                 text-xs text-slate-400">
+
+                        ⌘ K
+
+                    </span>
+
+                </div>
+
+
+                <button onclick="openAddModal()"
+                        class="bg-[#843ee8]
+                               text-white
+                               rounded-full
+                               px-5 py-3
+                               font-bold
+                               shadow-[0_5px_0_#5522a2]
+                               hover:bg-[#934df0]">
+
+                    <span class="text-xl mr-2">
+                        +
+                    </span>
+
+                    Add to day
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================================
+         DATE NAVIGATION
+    ================================================= -->
+
+    <div class="px-6 md:px-10 mt-8">
+
+        <div class="flex items-center gap-3">
+
+            <button onclick="moveDate(-1)"
+                    class="w-11 h-11 rounded-full
+                           bg-white border
+                           border-purple-100
+                           text-xl">
+
+                ‹
+
+            </button>
+
+
+            <div id="dateStrip"
+                 class="flex gap-2 overflow-x-auto
+                        nav-scroll flex-1">
+
+            </div>
+
+
+            <button onclick="moveDate(1)"
+                    class="w-11 h-11 rounded-full
+                           bg-white border
+                           border-purple-100
+                           text-xl">
+
+                ›
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         OVERVIEW PAGE
+    ================================================= -->
+
+    <section id="overview"
+             class="page active px-6 md:px-10 pb-10">
+
+
+        <!-- HERO -->
+
+        <div class="hero relative overflow-hidden
+                    rounded-[28px]
+                    text-white mt-8 p-8 md:p-10">
+
+            <div class="hero-ring right-20 -top-20"></div>
+
+            <div class="hero-ring right-52 bottom-[-90px]"></div>
+
+
+            <div class="relative z-10
+                        grid lg:grid-cols-2 gap-8
+                        items-center">
+
+                <div>
+
+                    <p class="text-sm tracking-[2px]
+                              text-purple-100">
+
+                        ✨ <span id="heroDate">
+                        SEPTEMBER 2, 2026
+                        </span>
+
+                    </p>
+
+
+                    <h1 class="serif
+                               text-4xl md:text-5xl
+                               leading-tight mt-4">
+
+                        Make today feel
+
+                        <br>
+
+                        <i class="text-[#ffc443]">
+                            like yours.
+                        </i>
+
+                    </h1>
+
+
+                    <p class="mt-5
+                              text-purple-100
+                              max-w-xl">
+
+                        A little progress is already
+                        in motion. Choose the next
+                        small thing.
+
+                    </p>
+
+                </div>
+
+
+                <div class="lg:justify-self-end
+                            w-full max-w-md">
+
+                    <div class="rounded-2xl
+                                border border-white/20
+                                bg-white/10
+                                p-6">
+
+                        <div class="flex justify-between">
+
+                            <span class="font-bold">
+                                Today's progress
+                            </span>
+
+                            <span id="heroProgress">
+                                0%
+                            </span>
+
+                        </div>
+
+
+                        <div class="h-2 mt-5
+                                    bg-white/20
+                                    rounded-full overflow-hidden">
+
+                            <div id="heroProgressBar"
+                                 class="h-full bg-[#ffc443]
+                                        rounded-full progress-bar"
+                                 style="width:0%">
+                            </div>
+
+                        </div>
+
+
+                        <div class="flex justify-between
+                                    mt-5 text-sm
+                                    text-purple-100">
+
+                            <span id="doneText">
+                                0 appointments done
+                            </span>
+
+                            <span id="goalText">
+                                0 goals reached
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- STAT CARDS -->
+
+        <div class="grid md:grid-cols-3 gap-4 mt-5">
+
+
+            <div class="bg-white/80
+                        rounded-2xl p-6
+                        border border-purple-100">
+
+                <p class="small-title text-slate-400">
+                    PLANNED TIME
+                </p>
+
+                <div class="flex justify-between items-center">
+
+                    <p id="plannedTime"
+                       class="serif text-3xl mt-2">
+
+                        0 min
+
+                    </p>
+
+                    <div class="w-11 h-11 rounded-full
+                                bg-purple-50
+                                flex items-center justify-center
+                                text-purple-600">
+
+                        ◷
+
+                    </div>
+
+                </div>
+
+                <p class="text-sm text-slate-400 mt-2">
+                    across your schedule
+                </p>
+
+            </div>
+
+
+            <div class="bg-white/80
+                        rounded-2xl p-6
+                        border border-purple-100">
+
+                <p class="small-title text-slate-400">
+                    OPEN GOALS
+                </p>
+
+                <div class="flex justify-between items-center">
+
+                    <p id="openGoals"
+                       class="serif text-3xl mt-2">
+
+                        00
+
+                    </p>
+
+                    <div class="w-11 h-11 rounded-full
+                                bg-pink-50
+                                flex items-center justify-center
+                                text-pink-500">
+
+                        ◎
+
+                    </div>
+
+                </div>
+
+                <p class="text-sm text-slate-400 mt-2">
+                    for this day
+                </p>
+
+            </div>
+
+
+            <div class="bg-white/80
+                        rounded-2xl p-6
+                        border border-purple-100">
+
+                <p class="small-title text-slate-400">
+                    HABIT RHYTHM
+                </p>
+
+                <div class="flex justify-between items-center">
+
+                    <p id="habitRhythm"
+                       class="serif text-3xl mt-2">
+
+                        0/0
+
+                    </p>
+
+                    <div class="w-11 h-11 rounded-full
+                                bg-orange-50
+                                flex items-center justify-center
+                                text-orange-500">
+
+                        ♨
+
+                    </div>
+
+                </div>
+
+                <p class="text-sm text-slate-400 mt-2">
+                    checked in today
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- SCHEDULE + GOALS -->
+
+        <div class="grid xl:grid-cols-[1fr_360px]
+                    gap-7 mt-8">
+
+
+            <!-- SCHEDULE -->
+
+            <div>
+
+                <div class="flex items-end
+                            justify-between mb-5">
+
+                    <div>
+
+                        <p class="small-title text-slate-400">
+                            SCHEDULE
+                        </p>
+
+                        <h2 class="serif text-3xl mt-2">
+                            Today at a glance
+                        </h2>
+
+                    </div>
+
+                    <button onclick="showPage('tasks')"
+                            class="text-purple-600
+                                   font-bold text-sm">
+
+                        View all ↗
+
+                    </button>
+
+                </div>
+
+
+                <div id="overviewTasks"
+                     class="space-y-3">
+
+                </div>
+
+            </div>
+
+
+            <!-- GOALS -->
+
+            <div>
+
+                <div class="flex items-end
+                            justify-between mb-5">
+
+                    <div>
+
+                        <p class="small-title text-slate-400">
+                            FOCUS LIST
+                        </p>
+
+                        <h2 class="serif text-3xl mt-2">
+                            Today's goals
+                        </h2>
+
+                    </div>
+
+                    <button onclick="addGoal()"
+                            class="w-10 h-10 rounded-full
+                                   bg-white border
+                                   border-purple-100
+                                   text-purple-600
+                                   text-xl">
+
+                        +
+
+                    </button>
+
+                </div>
+
+
+                <div class="bg-white rounded-2xl
+                            border border-purple-100
+                            p-5">
+
+                    <div id="goalList"></div>
+
+                </div>
+
+
+                <button onclick="showPage('habits')"
+                        class="w-full mt-4
+                               bg-white rounded-2xl
+                               p-5 border
+                               border-purple-100
+                               flex items-center
+                               justify-between">
+
+                    <div class="flex gap-3 items-center">
+
+                        <div class="w-10 h-10 rounded-full
+                                    bg-orange-100
+                                    flex items-center justify-center">
+
+                            ♨
+
+                        </div>
+
+                        <div class="text-left">
+
+                            <p class="font-bold">
+                                Keep your rhythm
+                            </p>
+
+                            <p class="text-sm text-slate-400">
+                                Check in on your habits
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <span>
+                        ›
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         TASK PAGE
+    ================================================= -->
+
+    <section id="tasks"
+             class="page px-6 md:px-10 pb-10">
+
+
+        <div class="mt-8 flex items-end
+                    justify-between">
+
+            <div>
+
+                <p class="small-title text-slate-400">
+                    TASKS & APPOINTMENTS
+                </p>
+
+                <h1 class="serif text-4xl mt-3">
+                    <span id="taskPageDate">
+                        Wednesday, September 2
+                    </span>
+                </h1>
+
+            </div>
+
+
+            <span id="taskPageCount"
+                  class="bg-purple-100
+                         text-purple-700
+                         px-4 py-2
+                         rounded-full text-sm">
+
+                0 planned
+
+            </span>
+
+        </div>
+
+
+        <div class="mt-7">
+
+            <div id="taskList"
+                 class="space-y-4">
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         GOALS PAGE
+    ================================================= -->
+
+    <section id="goals"
+             class="page px-6 md:px-10 pb-10">
+
+        <div class="mt-8">
+
+            <p class="small-title text-slate-400">
+                FOCUS LIST
+            </p>
+
+            <div class="flex items-center
+                        justify-between">
+
+                <h1 class="serif text-4xl mt-3">
+                    Your goals
+                </h1>
+
+                <button onclick="addGoal()"
+                        class="bg-purple-600
+                               text-white rounded-full
+                               px-5 py-3 font-bold">
+
+                    + Add goal
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div id="allGoals"
+             class="grid md:grid-cols-2
+                    lg:grid-cols-3 gap-5 mt-8">
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         CALENDAR PAGE
+    ================================================= -->
+
+    <section id="calendar"
+             class="page px-6 md:px-10 pb-10">
+
+        <div class="mt-8">
+
+            <p class="small-title text-slate-400">
+                PLANNER
+            </p>
+
+            <h1 class="serif text-4xl mt-3">
+                Calendar
+            </h1>
+
+        </div>
+
+
+        <div class="bg-white rounded-3xl
+                    border border-purple-100
+                    mt-8 overflow-hidden">
+
+            <div class="grid grid-cols-7
+                        border-b border-purple-100">
+
+                <div class="p-4 text-center font-bold">SUN</div>
+                <div class="p-4 text-center font-bold">MON</div>
+                <div class="p-4 text-center font-bold">TUE</div>
+                <div class="p-4 text-center font-bold">WED</div>
+                <div class="p-4 text-center font-bold">THU</div>
+                <div class="p-4 text-center font-bold">FRI</div>
+                <div class="p-4 text-center font-bold">SAT</div>
+
+            </div>
+
+            <div id="calendarGrid"
+                 class="grid grid-cols-7">
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         NOTES PAGE
+    ================================================= -->
+
+    <section id="notes"
+             class="page px-6 md:px-10 pb-10">
+
+        <div class="mt-8">
+
+            <p class="small-title text-slate-400">
+                YOUR THOUGHTS
+            </p>
+
+            <h1 class="serif text-4xl mt-3">
+                Notes
+            </h1>
+
+        </div>
+
+
+        <div class="grid md:grid-cols-2
+                    lg:grid-cols-3 gap-5 mt-8">
+
+            <div class="bg-[#fff7c7]
+                        rounded-3xl p-6
+                        min-h-[220px]
+                        rotate-[-1deg]">
+
+                <p class="small-title text-slate-500">
+                    QUICK NOTE
+                </p>
+
+                <textarea
+                    id="quickNote"
+                    oninput="saveNote()"
+                    class="w-full h-32 mt-5
+                           bg-transparent
+                           outline-none resize-none
+                           text-lg"
+                    placeholder="Write something..."></textarea>
+
+            </div>
+
+
+            <div class="bg-white rounded-3xl
+                        border border-purple-100
+                        p-6">
+
+                <p class="small-title text-slate-400">
+                    REMINDER
+                </p>
+
+                <textarea
+                    id="reminderNote"
+                    oninput="saveNote()"
+                    class="w-full h-32 mt-5
+                           bg-transparent
+                           outline-none resize-none"
+                    placeholder="Important things to remember..."></textarea>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         HABITS PAGE
+    ================================================= -->
+
+    <section id="habits"
+             class="page px-6 md:px-10 pb-10">
+
+        <div class="mt-8">
+
+            <p class="small-title text-slate-400">
+                ROUTINE
+            </p>
+
+            <h1 class="serif text-4xl mt-3">
+                Habits
+            </h1>
+
+        </div>
+
+
+        <div class="bg-white rounded-3xl
+                    border border-purple-100
+                    p-6 mt-8">
+
+            <div class="flex justify-between
+                        items-center mb-6">
+
+                <div>
+
+                    <h2 class="text-xl font-bold">
+                        Today's habits
+                    </h2>
+
+                    <p class="text-sm text-slate-400">
+                        Small actions build rhythm.
+                    </p>
+
+                </div>
+
+                <button onclick="addHabit()"
+                        class="bg-purple-600
+                               text-white rounded-full
+                               px-5 py-2.5 font-bold">
+
+                    + Add habit
+
+                </button>
+
+            </div>
+
+
+            <div id="habitList"
+                 class="space-y-3">
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STATISTICS PAGE
+    ================================================= -->
+
+    <section id="statistics"
+             class="page px-6 md:px-10 pb-10">
+
+        <div class="mt-8">
+
+            <p class="small-title text-slate-400">
+                YOUR PROGRESS
+            </p>
+
+            <h1 class="serif text-4xl mt-3">
+                Statistics
+            </h1>
+
+        </div>
+
+
+        <div class="grid md:grid-cols-3 gap-5 mt-8">
+
+
+            <div class="bg-white rounded-3xl
+                        p-7 border border-purple-100">
+
+                <p class="small-title text-slate-400">
+                    TOTAL TASKS
+                </p>
+
+                <p id="statTotal"
+                   class="serif text-5xl mt-3">
+                    0
+                </p>
+
+            </div>
+
+
+            <div class="bg-white rounded-3xl
+                        p-7 border border-purple-100">
+
+                <p class="small-title text-slate-400">
+                    COMPLETED
+                </p>
+
+                <p id="statCompleted"
+                   class="serif text-5xl mt-3">
+                    0
+                </p>
+
+            </div>
+
+
+            <div class="bg-white rounded-3xl
+                        p-7 border border-purple-100">
+
+                <p class="small-title text-slate-400">
+                    COMPLETION RATE
+                </p>
+
+                <p id="statRate"
+                   class="serif text-5xl mt-3">
+                    0%
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="bg-white rounded-3xl
+                    border border-purple-100
+                    p-7 mt-6">
+
+            <h2 class="text-xl font-bold">
+                Productivity overview
+            </h2>
+
+            <div class="mt-8
+                        flex items-end gap-3
+                        h-56"
+                 id="chart">
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+
+<!-- =====================================================
+     ADD TASK MODAL
+===================================================== -->
+
+<div id="taskModal"
+     class="hidden fixed inset-0 z-[200]
+            bg-black/40 modal-bg
+            items-center justify-center p-4">
+
+    <div class="bg-white rounded-3xl
+                w-full max-w-xl
+                max-h-[90vh] overflow-y-auto
+                shadow-2xl">
+
+
+        <div class="p-6 border-b
+                    border-purple-100
+                    flex items-center
+                    justify-between">
+
+            <div>
+
+                <p class="small-title text-purple-500">
+                    NEW APPOINTMENT
+                </p>
+
+                <h2 id="modalHeading"
+                    class="serif text-3xl mt-2">
+
+                    Add to your day
+
+                </h2>
+
+            </div>
+
+            <button onclick="closeModal()"
+                    class="w-10 h-10
+                           rounded-full
+                           bg-purple-50">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <form id="taskForm"
+              onsubmit="saveTask(event)"
+              class="p-6">
+
+            <input type="hidden" id="editTaskId">
+
+
+            <label class="block font-bold mb-2">
+                What are you planning?
+            </label>
+
+            <input
+                id="taskTitle"
+                required
+                placeholder="e.g. Deep work block"
+                class="w-full px-4 py-3
+                       rounded-xl border
+                       border-purple-100
+                       outline-none
+                       focus:ring-2
+                       focus:ring-purple-500">
+
+
+            <div class="grid grid-cols-2 gap-4 mt-5">
+
+                <div>
+
+                    <label class="block font-bold mb-2">
+                        Date
+                    </label>
+
+                    <input id="taskDate"
+                           type="date"
+                           required
+                           class="w-full px-4 py-3
+                                  rounded-xl border
+                                  border-purple-100
+                                  outline-none">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block font-bold mb-2">
+                        Category
+                    </label>
+
+                    <select id="taskCategory"
+                            class="w-full px-4 py-3
+                                   rounded-xl border
+                                   border-purple-100
+                                   outline-none">
+
+                        <option>Focus</option>
+                        <option>Work</option>
+                        <option>Personal</option>
+                        <option>Health</option>
+                        <option>Study</option>
+                        <option>Meeting</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="grid grid-cols-2 gap-4 mt-5">
+
+                <div>
+
+                    <label class="block font-bold mb-2">
+                        Start
+                    </label>
+
+                    <input id="taskStart"
+                           type="time"
+                           required
+                           class="w-full px-4 py-3
+                                  rounded-xl border
+                                  border-purple-100">
+
+                </div>
+
+
+                <div>
+
+                    <label class="block font-bold mb-2">
+                        End
+                    </label>
+
+                    <input id="taskEnd"
+                           type="time"
+                           required
+                           class="w-full px-4 py-3
+                                  rounded-xl border
+                                  border-purple-100">
+
+                </div>
+
+            </div>
+
+
+            <label class="block font-bold mb-2 mt-5">
+                Description
+            </label>
+
+            <textarea id="taskDescription"
+                      rows="3"
+                      placeholder="Add a small note..."
+                      class="w-full px-4 py-3
+                             rounded-xl border
+                             border-purple-100
+                             outline-none"></textarea>
+
+
+            <div class="flex gap-3 mt-6">
+
+                <button type="button"
+                        onclick="closeModal()"
+                        class="flex-1 py-3
+                               rounded-xl
+                               border border-purple-100
+                               font-bold">
+
+                    Cancel
+
+                </button>
+
+                <button type="submit"
+                        class="flex-1 py-3
+                               rounded-xl
+                               bg-purple-600
+                               text-white
+                               font-bold">
+
+                    Save plan
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script>
+
+/* =====================================================
+   DATA
+===================================================== */
+
+let tasks =
+    JSON.parse(localStorage.getItem("dailyPlannerTasks")) || [];
+
+let goals =
+    JSON.parse(localStorage.getItem("dailyPlannerGoals")) || [
+        {
+            id: 1,
+            title: "Make progress on the one important thing",
+            completed: false
+        },
+        {
+            id: 2,
+            title: "Leave room for a real pause",
+            completed: true
+        },
+        {
+            id: 3,
+            title: "Close the day with a clear desk",
+            completed: false
+        }
+    ];
+
+let habits =
+    JSON.parse(localStorage.getItem("dailyPlannerHabits")) || [
+        {
+            id: 1,
+            title: "Drink enough water",
+            completed: false
+        },
+        {
+            id: 2,
+            title: "Read for 20 minutes",
+            completed: false
+        },
+        {
+            id: 3,
+            title: "Plan tomorrow",
+            completed: false
+        }
+    ];
+
+let selectedDate =
+    localStorage.getItem("dailyPlannerDate") ||
+    new Date().toISOString().split("T")[0];
+
+let currentPage = "overview";
+
+
+
+/* =====================================================
+   SAMPLE DATA
+===================================================== */
+
+if (tasks.length === 0) {
+
+    tasks = [
+        {
+            id: Date.now() + 1,
+            title: "Morning reset & plan",
+            date: selectedDate,
+            start: "08:30",
+            end: "09:00",
+            category: "Focus",
+            description: "Set the tone before the day gets noisy.",
+            completed: true
+        },
+
+        {
+            id: Date.now() + 2,
+            title: "Deep work block",
+            date: selectedDate,
+            start: "10:00",
+            end: "11:30",
+            category: "Work",
+            description: "Draft the project brief while energy is high.",
+            completed: false
+        },
+
+        {
+            id: Date.now() + 3,
+            title: "Lunch away from the desk",
+            date: selectedDate,
+            start: "12:30",
+            end: "13:15",
+            category: "Personal",
+            description: "",
+            completed: false
+        },
+
+        {
+            id: Date.now() + 4,
+            title: "Walk and clear the head",
+            date: selectedDate,
+            start: "16:15",
+            end: "16:45",
+            category: "Health",
+            description: "A small reset counts.",
+            completed: false
+        }
+    ];
+
+    saveAll();
+
+}
+
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    document.getElementById("taskDate").value =
+        selectedDate;
+
+    loadNotes();
+
+    renderEverything();
+
+    updateGreeting();
+
+});
+
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+function saveAll() {
+
+    localStorage.setItem(
+        "dailyPlannerTasks",
+        JSON.stringify(tasks)
+    );
+
+    localStorage.setItem(
+        "dailyPlannerGoals",
+        JSON.stringify(goals)
+    );
+
+    localStorage.setItem(
+        "dailyPlannerHabits",
+        JSON.stringify(habits)
+    );
+
+    localStorage.setItem(
+        "dailyPlannerDate",
+        selectedDate
+    );
+
+}
+
+
+
+/* =====================================================
+   RENDER EVERYTHING
+===================================================== */
+
+function renderEverything() {
+
+    renderDates();
+
+    renderOverview();
+
+    renderTasks();
+
+    renderGoals();
+
+    renderHabits();
+
+    renderCalendar();
+
+    renderStatistics();
+
+    updateCounts();
+
+}
+
+
+
+/* =====================================================
+   GREETING
+===================================================== */
+
+function updateGreeting() {
+
+    let hour = new Date().getHours();
+
+    let greeting = "Good morning";
+
+    if (hour >= 12 && hour < 17) {
+        greeting = "Good afternoon";
+    }
+
+    if (hour >= 17) {
+        greeting = "Good evening";
+    }
+
+    document.getElementById("pageTitle").innerHTML =
+        `${greeting}<span class="text-purple-600">..</span>`;
+
+}
+
+
+
+/* =====================================================
+   DATE HELPERS
+===================================================== */
+
+function dateObject(date) {
+
+    return new Date(date + "T00:00:00");
+
+}
+
+
+function formatLongDate(date) {
+
+    return dateObject(date).toLocaleDateString(
+        "en-US",
+        {
+            weekday: "long",
+            month: "long",
+            day: "numeric"
+        }
+    );
+
+}
+
+
+function formatUpperDate(date) {
+
+    return dateObject(date).toLocaleDateString(
+        "en-US",
+        {
+            month: "long",
+            day: "numeric",
+            year: "numeric"
+        }
+    ).toUpperCase();
+
+}
+
+
+
+/* =====================================================
+   DATE STRIP
+===================================================== */
+
+function renderDates() {
+
+    let container =
+        document.getElementById("dateStrip");
+
+    container.innerHTML = "";
+
+    let base =
+        dateObject(selectedDate);
+
+    for (let i = -3; i <= 3; i++) {
+
+        let d = new Date(base);
+
+        d.setDate(d.getDate() + i);
+
+        let date =
+            d.toISOString().split("T")[0];
+
+        let dayName =
+            d.toLocaleDateString("en-US", {
+                weekday: "short"
+            }).toUpperCase();
+
+        let dayNumber =
+            d.getDate();
+
+        let button =
+            document.createElement("button");
+
+        button.className =
+            `day-card shrink-0
+             w-[145px] sm:w-[165px]
+             h-[82px]
+             rounded-3xl
+             border border-purple-100
+             bg-white
+             flex flex-col
+             items-center justify-center
+             ${date === selectedDate ? "active" : ""}`;
+
+        button.innerHTML = `
+            <span class="text-xs opacity-70">
+                ${dayName}
+            </span>
+
+            <span class="serif text-2xl mt-1">
+                ${dayNumber}
+            </span>
+
+            ${
+                date === selectedDate
+                ? `<span class="text-[#ffc443] text-xs">•</span>`
+                : ""
+            }
+        `;
+
+        button.onclick = () => {
+
+            selectedDate = date;
+
+            saveAll();
+
+            document.getElementById("taskDate").value =
+                selectedDate;
+
+            renderEverything();
+
+        };
+
+        container.appendChild(button);
+
+    }
+
+
+    document.getElementById("heroDate")
+        .innerText =
+        formatUpperDate(selectedDate);
+
+    document.getElementById("taskPageDate")
+        .innerText =
+        formatLongDate(selectedDate);
+
+}
+
+
+
+/* =====================================================
+   MOVE DATE
+===================================================== */
+
+function moveDate(amount) {
+
+    let d =
+        dateObject(selectedDate);
+
+    d.setDate(d.getDate() + amount);
+
+    selectedDate =
+        d.toISOString().split("T")[0];
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+
+/* =====================================================
+   OVERVIEW
+===================================================== */
+
+function renderOverview() {
+
+    let todayTasks =
+        tasks.filter(
+            task => task.date === selectedDate
+        );
+
+
+    let completed =
+        todayTasks.filter(
+            task => task.completed
+        ).length;
+
+
+    let progress =
+        todayTasks.length
+        ? Math.round(
+            completed / todayTasks.length * 100
+          )
+        : 0;
+
+
+    document.getElementById("heroProgress")
+        .innerText =
+        progress + "%";
+
+
+    document.getElementById("heroProgressBar")
+        .style.width =
+        progress + "%";
+
+
+    document.getElementById("doneText")
+        .innerText =
+        `${completed} appointments done`;
+
+
+    document.getElementById("goalText")
+        .innerText =
+        `${goals.filter(g => g.completed).length} goals reached`;
+
+
+    let totalMinutes =
+        todayTasks.reduce(
+            (sum, task) =>
+                sum + duration(task.start, task.end),
+            0
+        );
+
+
+    document.getElementById("plannedTime")
+        .innerText =
+        formatMinutes(totalMinutes);
+
+
+    document.getElementById("openGoals")
+        .innerText =
+        String(
+            goals.filter(g => !g.completed).length
+        ).padStart(2, "0");
+
+
+    let habitsDone =
+        habits.filter(h => h.completed).length;
+
+
+    document.getElementById("habitRhythm")
+        .innerText =
+        `${habitsDone}/${habits.length}`;
+
+
+    let overview =
+        document.getElementById("overviewTasks");
+
+    overview.innerHTML = "";
+
+
+    if (todayTasks.length === 0) {
+
+        overview.innerHTML = emptyState(
+            "No plans yet",
+            "Add something to make room for today."
+        );
+
+        return;
+
+    }
+
+
+    todayTasks
+        .sort(
+            (a,b) =>
+                a.start.localeCompare(b.start)
+        )
+        .forEach(task => {
+
+            overview.appendChild(
+                createTaskElement(task, true)
+            );
+
+        });
+
+}
+
+
+
+/* =====================================================
+   TASKS PAGE
+===================================================== */
+
+function renderTasks() {
+
+    let list =
+        document.getElementById("taskList");
+
+    list.innerHTML = "";
+
+
+    let today =
+        tasks.filter(
+            task => task.date === selectedDate
+        );
+
+
+    document.getElementById("taskPageCount")
+        .innerText =
+        `${today.length} planned`;
+
+
+    if (today.length === 0) {
+
+        list.innerHTML =
+            emptyState(
+                "Your schedule is clear.",
+                "Add your first appointment."
+            );
+
+        return;
+
+    }
+
+
+    today
+        .sort(
+            (a,b) =>
+                a.start.localeCompare(b.start)
+        )
+        .forEach(task => {
+
+            list.appendChild(
+                createTaskElement(task, false)
+            );
+
+        });
+
+}
+
+
+
+/* =====================================================
+   CREATE TASK ELEMENT
+===================================================== */
+
+function createTaskElement(task, compact) {
+
+    let wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        `task-card bg-white
+         rounded-2xl
+         border border-purple-100
+         p-5 md:p-6
+         flex gap-4
+         ${task.completed ? "opacity-75" : ""}`;
+
+
+    let icon = {
+
+        Focus: "◎",
+        Work: "▦",
+        Personal: "♙",
+        Health: "♡",
+        Study: "📚",
+        Meeting: "👥"
+
+    }[task.category] || "○";
+
+
+    wrapper.innerHTML = `
+
+        <button
+            onclick="toggleTask(${task.id})"
+            class="check shrink-0
+                   w-11 h-11 rounded-full
+                   border-2
+                   border-purple-100
+                   flex items-center justify-center
+                   text-lg
+                   ${task.completed ? "done" : ""}">
+
+            ${task.completed ? "✓" : ""}
+
+        </button>
+
+
+        <div class="flex-1 min-w-0">
+
+            <div class="flex flex-col
+                        sm:flex-row
+                        sm:items-start
+                        justify-between gap-3">
+
+                <div>
+
+                    <div class="flex items-center gap-3">
+
+                        <span class="w-8 h-8
+                                     rounded-full
+                                     bg-purple-50
+                                     flex items-center
+                                     justify-center
+                                     text-purple-600">
+
+                            ${icon}
+
+                        </span>
+
+                        <h3 class="font-bold text-lg
+                            ${task.completed
+                                ? "line-through text-slate-400"
+                                : ""}">
+
+                            ${escapeHTML(task.title)}
+
+                        </h3>
+
+                    </div>
+
+
+                    <div class="flex flex-wrap
+                                items-center gap-3
+                                mt-2
+                                text-sm text-slate-400">
+
+                        <span>
+                            ◷ ${formatTime(task.start)}
+                        </span>
+
+                        <span>
+                            ${formatMinutes(
+                                duration(task.start, task.end)
+                            )}
+                        </span>
+
+                        <span class="
+                            px-3 py-1 rounded-full
+                            bg-purple-50
+                            text-purple-600">
+
+                            ${escapeHTML(task.category)}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="flex gap-2">
+
+                    <button
+                        onclick="editTask(${task.id})"
+                        class="w-9 h-9 rounded-full
+                               hover:bg-purple-50">
+
+                        ✎
+
+                    </button>
+
+                    <button
+                        onclick="deleteTask(${task.id})"
+                        class="w-9 h-9 rounded-full
+                               hover:bg-red-50">
+
+                        🗑
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            ${
+                task.description
+                ? `
+                    <p class="mt-4
+                              pl-3
+                              border-l-2
+                              border-[#ffc443]
+                              text-sm
+                              text-slate-400">
+
+                        ${escapeHTML(task.description)}
+
+                    </p>
+                  `
+                : ""
+            }
+
+        </div>
+    `;
+
+    return wrapper;
+
+}
+
+
+
+/* =====================================================
+   ADD TASK MODAL
+===================================================== */
+
+function openAddModal(time = "09:00") {
+
+    document.getElementById("modalHeading")
+        .innerText =
+        "Add to your day";
+
+
+    document.getElementById("editTaskId")
+        .value = "";
+
+
+    document.getElementById("taskForm")
+        .reset();
+
+
+    document.getElementById("taskDate")
+        .value =
+        selectedDate;
+
+
+    document.getElementById("taskStart")
+        .value =
+        time;
+
+
+    let hour =
+        parseInt(time.split(":")[0]) + 1;
+
+    if (hour > 23) hour = 23;
+
+    document.getElementById("taskEnd")
+        .value =
+        `${String(hour).padStart(2,"0")}:00`;
+
+
+    document.getElementById("taskModal")
+        .classList.remove("hidden");
+
+    document.getElementById("taskModal")
+        .classList.add("flex");
+
+}
+
+
+function closeModal() {
+
+    document.getElementById("taskModal")
+        .classList.add("hidden");
+
+    document.getElementById("taskModal")
+        .classList.remove("flex");
+
+}
+
+
+
+/* =====================================================
+   SAVE TASK
+===================================================== */
+
+function saveTask(event) {
+
+    event.preventDefault();
+
+
+    let id =
+        document.getElementById("editTaskId")
+            .value;
+
+
+    let start =
+        document.getElementById("taskStart")
+            .value;
+
+    let end =
+        document.getElementById("taskEnd")
+            .value;
+
+
+    if (end <= start) {
+
+        alert(
+            "End time should be after start time."
+        );
+
+        return;
+
+    }
+
+
+    let task = {
+
+        id:
+            id
+            ? Number(id)
+            : Date.now(),
+
+        title:
+            document.getElementById("taskTitle")
+                .value.trim(),
+
+        date:
+            document.getElementById("taskDate")
+                .value,
+
+        start: start,
+
+        end: end,
+
+        category:
+            document.getElementById("taskCategory")
+                .value,
+
+        description:
+            document.getElementById("taskDescription")
+                .value.trim(),
+
+        completed: false
+
+    };
+
+
+    if (id) {
+
+        let index =
+            tasks.findIndex(
+                t => t.id === Number(id)
+            );
+
+        if (index !== -1) {
+
+            task.completed =
+                tasks[index].completed;
+
+            tasks[index] = task;
+
+        }
+
+    } else {
+
+        tasks.push(task);
+
+    }
+
+
+    selectedDate =
+        task.date;
+
+
+    saveAll();
+
+    closeModal();
+
+    renderEverything();
+
+}
+
+
+
+/* =====================================================
+   EDIT TASK
+===================================================== */
+
+function editTask(id) {
+
+    let task =
+        tasks.find(
+            t => t.id === id
+        );
+
+    if (!task) return;
+
+
+    document.getElementById("modalHeading")
+        .innerText =
+        "Edit appointment";
+
+
+    document.getElementById("editTaskId")
+        .value =
+        task.id;
+
+
+    document.getElementById("taskTitle")
+        .value =
+        task.title;
+
+
+    document.getElementById("taskDate")
+        .value =
+        task.date;
+
+
+    document.getElementById("taskStart")
+        .value =
+        task.start;
+
+
+    document.getElementById("taskEnd")
+        .value =
+        task.end;
+
+
+    document.getElementById("taskCategory")
+        .value =
+        task.category;
+
+
+    document.getElementById("taskDescription")
+        .value =
+        task.description;
+
+
+    document.getElementById("taskModal")
+        .classList.remove("hidden");
+
+    document.getElementById("taskModal")
+        .classList.add("flex");
+
+}
+
+
+
+/* =====================================================
+   DELETE TASK
+===================================================== */
+
+function deleteTask(id) {
+
+    if (
+        !confirm(
+            "Delete this appointment?"
+        )
+    ) return;
+
+
+    tasks =
+        tasks.filter(
+            task => task.id !== id
+        );
+
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+
+/* =====================================================
+   TOGGLE TASK
+===================================================== */
+
+function toggleTask(id) {
+
+    let task =
+        tasks.find(
+            t => t.id === id
+        );
+
+    if (!task) return;
+
+    task.completed =
+        !task.completed;
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+
+/* =====================================================
+   GOALS
+===================================================== */
+
+function renderGoals() {
+
+    let small =
+        document.getElementById("goalList");
+
+    let all =
+        document.getElementById("allGoals");
+
+    small.innerHTML = "";
+
+    all.innerHTML = "";
+
+
+    goals.forEach(goal => {
+
+        let row =
+            document.createElement("div");
+
+        row.className =
+            "flex items-center gap-3 mb-5";
+
+
+        row.innerHTML = `
+
+            <button
+                onclick="toggleGoal(${goal.id})"
+                class="w-7 h-7 rounded-full
+                       border-2
+                       border-purple-200
+                       flex items-center
+                       justify-center
+                       shrink-0
+                       ${
+                           goal.completed
+                           ? "bg-purple-600 text-white"
+                           : ""
+                       }">
+
+                ${goal.completed ? "✓" : ""}
+
+            </button>
+
+
+            <span class="text-sm
+                ${
+                    goal.completed
+                    ? "line-through text-slate-400"
+                    : ""
+                }">
+
+                ${escapeHTML(goal.title)}
+
+            </span>
+
+        `;
+
+        small.appendChild(row);
+
+
+        let card =
+            document.createElement("div");
+
+        card.className =
+            "bg-white rounded-3xl p-6 " +
+            "border border-purple-100";
+
+
+        card.innerHTML = `
+
+            <div class="flex justify-between">
+
+                <div class="w-12 h-12
+                            rounded-2xl
+                            bg-purple-50
+                            flex items-center
+                            justify-center
+                            text-purple-600
+                            text-xl">
+
+                    ◎
+
+                </div>
+
+                <button
+                    onclick="deleteGoal(${goal.id})"
+                    class="text-slate-300
+                           hover:text-red-500">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <h3 class="font-bold text-lg mt-6">
+
+                ${escapeHTML(goal.title)}
+
+            </h3>
+
+
+            <button
+                onclick="toggleGoal(${goal.id})"
+                class="mt-5 px-4 py-2
+                       rounded-full
+                       ${
+                           goal.completed
+                           ? "bg-purple-100 text-purple-700"
+                           : "bg-slate-100 text-slate-600"
+                       }">
+
+                ${
+                    goal.completed
+                    ? "✓ Completed"
+                    : "Mark complete"
+                }
+
+            </button>
+
+        `;
+
+        all.appendChild(card);
+
+    });
+
+}
+
+
+function addGoal() {
+
+    let title =
+        prompt("Enter your new goal:");
+
+    if (!title || !title.trim()) return;
+
+
+    goals.push({
+
+        id: Date.now(),
+
+        title: title.trim(),
+
+        completed: false
+
+    });
+
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+function toggleGoal(id) {
+
+    let goal =
+        goals.find(
+            g => g.id === id
+        );
+
+    if (!goal) return;
+
+    goal.completed =
+        !goal.completed;
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+function deleteGoal(id) {
+
+    goals =
+        goals.filter(
+            g => g.id !== id
+        );
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+
+/* =====================================================
+   HABITS
+===================================================== */
+
+function renderHabits() {
+
+    let list =
+        document.getElementById("habitList");
+
+    list.innerHTML = "";
+
+
+    habits.forEach(habit => {
+
+        let div =
+            document.createElement("div");
+
+        div.className =
+            "flex items-center gap-4 " +
+            "p-4 rounded-2xl " +
+            "bg-slate-50";
+
+
+        div.innerHTML = `
+
+            <button
+                onclick="toggleHabit(${habit.id})"
+                class="w-10 h-10 rounded-full
+                       border-2
+                       border-purple-200
+                       flex items-center justify-center
+                       ${
+                           habit.completed
+                           ? "bg-purple-600 text-white"
+                           : ""
+                       }">
+
+                ${habit.completed ? "✓" : ""}
+
+            </button>
+
+
+            <div class="flex-1">
+
+                <p class="font-bold
+                    ${
+                        habit.completed
+                        ? "line-through text-slate-400"
+                        : ""
+                    }">
+
+                    ${escapeHTML(habit.title)}
+
+                </p>
+
+                <p class="text-xs text-slate-400 mt-1">
+                    Daily habit
+                </p>
+
+            </div>
+
+
+            <button
+                onclick="deleteHabit(${habit.id})"
+                class="text-slate-300
+                       hover:text-red-500">
+
+                ×
+
+            </button>
+
+        `;
+
+        list.appendChild(div);
+
+    });
+
+}
+
+
+function addHabit() {
+
+    let title =
+        prompt("Enter your new habit:");
+
+    if (!title || !title.trim()) return;
+
+
+    habits.push({
+
+        id: Date.now(),
+
+        title: title.trim(),
+
+        completed: false
+
+    });
+
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+function toggleHabit(id) {
+
+    let habit =
+        habits.find(
+            h => h.id === id
+        );
+
+    if (!habit) return;
+
+    habit.completed =
+        !habit.completed;
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+function deleteHabit(id) {
+
+    habits =
+        habits.filter(
+            h => h.id !== id
+        );
+
+    saveAll();
+
+    renderEverything();
+
+}
+
+
+
+/* =====================================================
+   CALENDAR
+===================================================== */
+
+function renderCalendar() {
+
+    let grid =
+        document.getElementById("calendarGrid");
+
+    grid.innerHTML = "";
+
+
+    let current =
+        dateObject(selectedDate);
+
+
+    let year =
+        current.getFullYear();
+
+    let month =
+        current.getMonth();
+
+
+    let first =
+        new Date(year, month, 1);
+
+    let last =
+        new Date(year, month + 1, 0);
+
+
+    for (
+        let i = 0;
+        i < first.getDay();
+        i++
+    ) {
+
+        let blank =
+            document.createElement("div");
+
+        blank.className =
+            "min-h-[120px] border-r " +
+            "border-b border-purple-100";
+
+        grid.appendChild(blank);
+
+    }
+
+
+    for (
+        let day = 1;
+        day <= last.getDate();
+        day++
+    ) {
+
+        let date =
+            new Date(year, month, day)
+            .toISOString()
+            .split("T")[0];
+
+
+        let cell =
+            document.createElement("button");
+
+        cell.className =
+            "min-h-[120px] p-3 text-left " +
+            "border-r border-b " +
+            "border-purple-100 " +
+            "hover:bg-purple-50";
+
+
+        let count =
+            tasks.filter(
+                t => t.date === date
+            ).length;
+
+
+        cell.innerHTML = `
+
+            <span class="
+                inline-flex w-8 h-8
+                items-center justify-center
+                rounded-full
+                ${
+                    date === selectedDate
+                    ? "bg-purple-600 text-white"
+                    : ""
+                }">
+
+                ${day}
+
+            </span>
+
+
+            ${
+                count
+                ? `
+                    <div class="mt-3
+                                text-xs
+                                bg-purple-100
+                                text-purple-700
+                                rounded-lg p-2">
+
+                        ${count} task${count > 1 ? "s" : ""}
+
+                    </div>
+                  `
+                : ""
+            }
+
+        `;
+
+
+        cell.onclick = () => {
+
+            selectedDate = date;
+
+            saveAll();
+
+            showPage("tasks");
+
+            renderEverything();
+
+        };
+
+
+        grid.appendChild(cell);
+
+    }
+
+}
+
+
+
+/* =====================================================
+   NOTES
+===================================================== */
+
+function saveNote() {
+
+    localStorage.setItem(
+        "dailyPlannerQuickNote",
+        document.getElementById("quickNote").value
+    );
+
+    localStorage.setItem(
+        "dailyPlannerReminder",
+        document.getElementById("reminderNote").value
+    );
+
+}
+
+
+function loadNotes() {
+
+    document.getElementById("quickNote")
+        .value =
+        localStorage.getItem(
+            "dailyPlannerQuickNote"
+        ) || "";
+
+
+    document.getElementById("reminderNote")
+        .value =
+        localStorage.getItem(
+            "dailyPlannerReminder"
+        ) || "";
+
+}
+
+
+
+/* =====================================================
+   STATISTICS
+===================================================== */
+
+function renderStatistics() {
+
+    let total = tasks.length;
+
+    let completed =
+        tasks.filter(
+            t => t.completed
+        ).length;
+
+    let rate =
+        total
+        ? Math.round(
+            completed / total * 100
+          )
+        : 0;
+
+
+    document.getElementById("statTotal")
+        .innerText = total;
+
+
+    document.getElementById("statCompleted")
+        .innerText = completed;
+
+
+    document.getElementById("statRate")
+        .innerText =
+        rate + "%";
+
+
+    let chart =
+        document.getElementById("chart");
+
+    chart.innerHTML = "";
+
+
+    let days = [];
+
+    let base =
+        dateObject(selectedDate);
+
+
+    for (let i = 6; i >= 0; i--) {
+
+        let d = new Date(base);
+
+        d.setDate(d.getDate() - i);
+
+        let date =
+            d.toISOString().split("T")[0];
+
+
+        let count =
+            tasks.filter(
+                t => t.date === date
+            ).length;
+
+
+        days.push({
+            date,
+            count,
+            label:
+                d.toLocaleDateString(
+                    "en-US",
+                    { weekday: "short" }
+                )
+        });
+
+    }
+
+
+    let max =
+        Math.max(
+            ...days.map(d => d.count),
+            1
+        );
+
+
+    days.forEach(day => {
+
+        let bar =
+            document.createElement("div");
+
+        bar.className =
+            "flex-1 flex flex-col " +
+            "items-center justify-end gap-2";
+
+
+        let height =
+            Math.max(
+                8,
+                day.count / max * 160
+            );
+
+
+        bar.innerHTML = `
+
+            <span class="text-xs
+                         text-slate-400">
+
+                ${day.count}
+
+            </span>
+
+            <div class="w-full
+                        max-w-[50px]
+                        bg-purple-500
+                        rounded-t-xl"
+                 style="height:${height}px">
+
+            </div>
+
+            <span class="text-xs
+                         text-slate-400">
+
+                ${day.label}
+
+            </span>
+
+        `;
+
+        chart.appendChild(bar);
+
+    });
+
+}
+
+
+
+/* =====================================================
+   COUNTS
+===================================================== */
+
+function updateCounts() {
+
+    document.getElementById("sidebarTaskCount")
+        .innerText =
+        tasks.filter(
+            t => t.date === selectedDate
+        ).length;
+
+}
+
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+function searchTasks() {
+
+    let value =
+        document.getElementById("globalSearch")
+            .value
+            .toLowerCase();
+
+
+    if (!value) {
+
+        renderTasks();
+
+        return;
+
+    }
+
+
+    let list =
+        document.getElementById("taskList");
+
+    list.innerHTML = "";
+
+
+    let results =
+        tasks.filter(
+            task =>
+                task.title
+                    .toLowerCase()
+                    .includes(value) ||
+                task.category
+                    .toLowerCase()
+                    .includes(value) ||
+                task.description
+                    .toLowerCase()
+                    .includes(value)
+        );
+
+
+    if (results.length === 0) {
+
+        list.innerHTML =
+            emptyState(
+                "Nothing found",
+                "Try another search."
+            );
+
+        return;
+
+    }
+
+
+    results.forEach(task => {
+
+        list.appendChild(
+            createTaskElement(task)
+        );
+
+    });
+
+}
+
+
+
+/* =====================================================
+   PAGE NAVIGATION
+===================================================== */
+
+function showPage(page) {
+
+    currentPage = page;
+
+
+    document
+        .querySelectorAll(".page")
+        .forEach(section => {
+
+            section.classList.remove("active");
+
+        });
+
+
+    let selected =
+        document.getElementById(page);
+
+    if (selected) {
+        selected.classList.add("active");
+    }
+
+
+    document
+        .querySelectorAll(".sidebar-link")
+        .forEach(link => {
+
+            link.classList.remove("active");
+
+            if (
+                link.dataset.page === page
+            ) {
+
+                link.classList.add("active");
+
+            }
+
+        });
+
+
+    let names = {
+
+        overview: "OVERVIEW",
+        tasks: "TASKS & SCHEDULE",
+        goals: "GOALS",
+        calendar: "CALENDAR",
+        notes: "NOTES",
+        habits: "HABITS",
+        statistics: "STATISTICS"
+
+    };
+
+
+    document.getElementById("breadcrumb")
+        .innerText =
+        names[page];
+
+
+    if (page === "tasks") {
+
+        document.getElementById("taskPageDate")
+            .innerText =
+            formatLongDate(selectedDate);
+
+    }
+
+
+    closeSidebar();
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
+
+
+
+/* =====================================================
+   MOBILE SIDEBAR
+===================================================== */
+
+function openSidebar() {
+
+    document.getElementById("sidebar")
+        .classList.add("open");
+
+    document.getElementById("mobileOverlay")
+        .classList.remove("hidden");
+
+}
+
+
+function closeSidebar() {
+
+    document.getElementById("sidebar")
+        .classList.remove("open");
+
+    document.getElementById("mobileOverlay")
+        .classList.add("hidden");
+
+}
+
+
+
+/* =====================================================
+   TIME
+===================================================== */
+
+function duration(start, end) {
+
+    let a =
+        start.split(":").map(Number);
+
+    let b =
+        end.split(":").map(Number);
+
+
+    let startMinutes =
+        a[0] * 60 + a[1];
+
+    let endMinutes =
+        b[0] * 60 + b[1];
+
+
+    return endMinutes - startMinutes;
+
+}
+
+
+function formatMinutes(minutes) {
+
+    if (minutes < 60) {
+
+        return `${minutes} min`;
+
+    }
+
+
+    let hours =
+        Math.floor(minutes / 60);
+
+    let mins =
+        minutes % 60;
+
+
+    if (mins === 0) {
+
+        return `${hours} hr`;
+
+    }
+
+
+    return `${hours} hr ${mins} min`;
+
+}
+
+
+function formatTime(time) {
+
+    let [hour, minute] =
+        time.split(":").map(Number);
+
+
+    let suffix =
+        hour >= 12 ? "PM" : "AM";
+
+
+    let h =
+        hour % 12 || 12;
+
+
+    return `${h}:${String(minute).padStart(2,"0")} ${suffix}`;
+
+}
+
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+function emptyState(title, text) {
+
+    return `
+
+        <div class="bg-white
+                    border border-purple-100
+                    rounded-3xl
+                    p-10 text-center">
+
+            <div class="text-4xl">
+                ✨
+            </div>
+
+            <h3 class="serif text-2xl mt-4">
+                ${title}
+            </h3>
+
+            <p class="text-slate-400 mt-2">
+                ${text}
+            </p>
+
+            <button
+                onclick="openAddModal()"
+                class="mt-5
+                       bg-purple-600
+                       text-white
+                       px-5 py-2.5
+                       rounded-full
+                       font-bold">
+
+                + Add plan
+
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+
+/* =====================================================
+   SECURITY
+===================================================== */
+
+function escapeHTML(text) {
+
+    let div =
+        document.createElement("div");
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
+
+
+
+/* =====================================================
+   CLOSE MODAL OUTSIDE
+===================================================== */
+
+document.getElementById("taskModal")
+    .addEventListener(
+        "click",
+        function(event) {
+
+            if (
+                event.target === this
+            ) {
+
+                closeModal();
+
+            }
+
+        }
+    );
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Escape") {
+
+            closeModal();
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
